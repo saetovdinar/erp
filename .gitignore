@@ -1,0 +1,21 @@
+node_modules/
+
+# Сборка
+dist/
+build/
+coverage/
+
+# Окружение и секреты
+.env
+.env.*
+
+# IDE и OS
+.DS_Store
+.idea/
+.vscode/
+
+# Локальные заметки ассистента (правила mint-client: не коммитить)
+.zcode/
+*.local.md
+
+*.log

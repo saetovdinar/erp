@@ -1,0 +1,33 @@
+{
+  "name": "erp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Система мониторинга такси: монорепо (Express + PostgreSQL backend, React frontend)",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin": "^2.12.1",
+    "ajv": "^8.20.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.15.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-react": "7.37.3",
+    "eslint-plugin-typescript-sort-keys": "3.3.0",
+    "globals": "^15.14.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.19.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
