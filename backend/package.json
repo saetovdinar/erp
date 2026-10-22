@@ -10,7 +10,9 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:setup": "ts-node-dev --transpile-only src/db/setup.ts"
+    "db:setup": "ts-node-dev --transpile-only src/db/setup.ts",
+    "db:seed": "ts-node-dev --transpile-only src/db/seed.ts",
+    "db:test-prepare": "ts-node-dev --transpile-only src/db/test-prepare.ts"
   },
   "dependencies": {
     "cors": "2.8.6",
