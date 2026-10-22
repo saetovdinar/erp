@@ -8,6 +8,7 @@ coverage/
 # Окружение и секреты
 .env
 .env.*
+!.env.example
 
 # IDE и OS
 .DS_Store
