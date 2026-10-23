@@ -4,6 +4,7 @@
 import type { AnyAction } from 'redux';
 import type { ThunkAction } from 'redux-thunk';
 
+import type { IAuthState } from '../features/auth/types';
 import type { IBookingsState } from '../features/bookings/types';
 import type { IDriversState } from '../features/drivers/types';
 import type { IFinesState } from '../features/fines/types';
@@ -11,6 +12,7 @@ import type { IHealthState } from '../features/health/types';
 import type { IVehiclesState } from '../features/vehicles/types';
 
 export interface IAppState {
+    auth: IAuthState;
     bookings: IBookingsState;
     drivers: IDriversState;
     fines: IFinesState;

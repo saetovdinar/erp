@@ -19,14 +19,39 @@ interface IApiFailure {
 
 type ApiBody<T> = IApiSuccess<T> | IApiFailure;
 
+// токен живёт в localStorage (переживает перезагрузку страницы)
+const TOKEN_KEY = 'erp_token';
+
+export function getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+    localStorage.removeItem(TOKEN_KEY);
+}
+
 /** Запрос к API с конвертом {success,data} / {success,error} (см. backend/src/shared/api). */
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const headers: Record<string, string> = {};
+    const token = getToken();
+
+    if (body !== undefined) {
+        headers['Content-Type'] = 'application/json';
+    }
+    if (token !== null) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
     let res: Response;
 
     try {
         res = await fetch(path, {
             body: body === undefined ? undefined : JSON.stringify(body),
-            headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+            headers,
             method
         });
     } catch {
@@ -42,6 +67,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     }
 
     if (!payload.success) {
+        // токен истёк/отозван — разлогиниваем на месте; сам логин 401 не считает
+        if (res.status === 401 && !path.startsWith('/v1/auth')) {
+            clearToken();
+            window.location.assign('/login');
+        }
         throw new Error(payload.error.message);
     }
 

@@ -347,6 +347,74 @@ form select {
     margin: 0 0 14px;
 }
 
+/* ===== Вход ===== */
+
+.login {
+    align-items: center;
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login__card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(15, 20, 30, 0.08);
+    display: grid;
+    gap: 12px;
+    padding: 28px 26px;
+    width: 340px;
+}
+
+.login__title {
+    font-size: 18px;
+    margin: 0;
+}
+
+.login__hint {
+    color: var(--muted);
+    margin: -6px 0 6px;
+}
+
+.login__submit {
+    justify-self: stretch;
+}
+
+/* ===== Пользователь в сайдбаре ===== */
+
+.sidebar__user {
+    align-items: center;
+    border-top: 1px solid #313c4f;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    padding: 12px 8px 0;
+}
+
+.sidebar__login {
+    color: #d5dbe6;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar__user .btn {
+    background: transparent;
+    border-color: #3d4b61;
+    color: #b9c2d0;
+    flex-shrink: 0;
+    padding: 4px 10px;
+}
+
+.sidebar__user .btn:hover {
+    background: #263143;
+    color: #fff;
+}
+
 /* ===== Формы ===== */
 
 .form {

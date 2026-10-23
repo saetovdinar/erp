@@ -1,6 +1,7 @@
 import { type AnyAction, type Reducer, applyMiddleware, combineReducers, createStore } from 'redux';
 import { thunk } from 'redux-thunk';
 
+import { authReducer } from '../features/auth/reducer';
 import { bookingsReducer } from '../features/bookings/reducer';
 import { driversReducer } from '../features/drivers/reducer';
 import { finesReducer } from '../features/fines/reducer';
@@ -10,6 +11,7 @@ import { vehiclesReducer } from '../features/vehicles/reducer';
 import type { IAppState } from './types';
 
 export const rootReducer = combineReducers({
+    auth: authReducer,
     bookings: bookingsReducer,
     drivers: driversReducer,
     fines: finesReducer,
