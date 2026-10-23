@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+
 import { closePool, getPool } from '../utils/db';
 import { logger } from '../utils/logger';
 
@@ -55,6 +57,7 @@ const V2 = '00000000-0000-4000-8000-000000000102';
 const V3 = '00000000-0000-4000-8000-000000000103';
 const V4 = '00000000-0000-4000-8000-000000000104';
 const V5 = '00000000-0000-4000-8000-000000000105';
+const ADMIN_ID = '00000000-0000-4000-8000-000000000901';
 
 /** Локальная дата-время 'YYYY-MM-DDTHH:mm' со сдвигом в часах от «сейчас». */
 function localDateTime(hoursFromNow: number): string {
@@ -290,6 +293,17 @@ ON CONFLICT (id) DO NOTHING`,
             [ b.id, b.vehicleId, b.driverId, b.startsAt, b.endsAt, b.purpose, b.status ]
         );
     }
+
+    // админ панели: логин admin, пароль из ADMIN_PASSWORD (по умолчанию — для
+    // разработки); при повторном сиде хэш обновляется под текущий env
+    const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin123';
+
+    await pool.query(
+`INSERT INTO users (id, login, password_hash, role)
+VALUES ($1, 'admin', $2, 'admin')
+ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
+        [ ADMIN_ID, await bcrypt.hash(adminPassword, 10) ]
+    );
 }
 
 

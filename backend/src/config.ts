@@ -11,12 +11,18 @@ function num(name: string, def: number): number {
     return Number.isFinite(value) ? value : def;
 }
 
-// когда появится авторизация — добавить jwtSecret с fail-fast проверкой
-// (как JWT_SECRET в taxi/backend: без значения — ошибка запуска)
+const jwtSecret = process.env.JWT_SECRET ?? '';
+
+if (!jwtSecret) {
+    throw new Error('JWT_SECRET обязателен (сгенерируйте: openssl rand -hex 32). Пример — в .env.example');
+}
+
 export const config = {
     env: process.env.NODE_ENV ?? 'development',
     port: num('PORT', 5100),
     databaseUrl: process.env.DATABASE_URL ?? 'postgres://localhost:5432/erp',
+    jwtSecret,
+    jwtTtlDays: num('JWT_TTL_DAYS', 30),
     rateLimit: num('RATE_LIMIT', 300)
 };
 

@@ -4,8 +4,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { NIL_UUID } from '../src/modules/bookings/service';
 
 import {
+    adminToken,
     app,
+    bearer,
     bookingPayload,
+    createAdmin,
     createPrereqs,
     driverPayload,
     finePayload,
@@ -13,18 +16,24 @@ import {
     vehiclePayload
 } from './helpers';
 
+let token = '';
+
 beforeEach(async () => {
     await resetDb();
+    await createAdmin();
+    token = await adminToken();
 });
 
 describe('бизнес-правила: удаление с зависимостями', () => {
     it('водителя со штрафом удалить нельзя — 409', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
 
         await request(app).post('/v1/fines')
+.set('Authorization', bearer(token))
 .send(finePayload(vehicleId, driverId));
 
-        const res = await request(app).delete(`/v1/drivers/${driverId}`);
+        const res = await request(app).delete(`/v1/drivers/${driverId}`)
+.set('Authorization', bearer(token));
 
         expect(res.status).toBe(409);
         expect(res.body.error.message)
@@ -32,12 +41,14 @@ describe('бизнес-правила: удаление с зависимост�
     });
 
     it('ТС с бронью удалить нельзя — 409', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
 
         await request(app).post('/v1/bookings')
+.set('Authorization', bearer(token))
 .send(bookingPayload(vehicleId, driverId));
 
-        const res = await request(app).delete(`/v1/vehicles/${vehicleId}`);
+        const res = await request(app).delete(`/v1/vehicles/${vehicleId}`)
+.set('Authorization', bearer(token));
 
         expect(res.status).toBe(409);
         expect(res.body.error.message)
@@ -45,9 +56,10 @@ describe('бизнес-правила: удаление с зависимост�
     });
 
     it('без зависимостей удаление проходит — 200', async () => {
-        const { driverId } = await createPrereqs();
+        const { driverId } = await createPrereqs(token);
 
-        const res = await request(app).delete(`/v1/drivers/${driverId}`);
+        const res = await request(app).delete(`/v1/drivers/${driverId}`)
+.set('Authorization', bearer(token));
 
         expect(res.status).toBe(200);
     });
@@ -58,8 +70,10 @@ describe('бизнес-правила: уникальность', () => {
         const payload = driverPayload({ licenseNumber: '16 99 777777' });
 
         await request(app).post('/v1/drivers')
+.set('Authorization', bearer(token))
 .send(payload);
         const res = await request(app).post('/v1/drivers')
+.set('Authorization', bearer(token))
 .send(payload);
 
         expect(res.status).toBe(409);
@@ -70,8 +84,10 @@ describe('бизнес-правила: уникальность', () => {
         const payload = vehiclePayload({ plate: 'Х999ХХ16' });
 
         await request(app).post('/v1/vehicles')
+.set('Authorization', bearer(token))
 .send(payload);
         const res = await request(app).post('/v1/vehicles')
+.set('Authorization', bearer(token))
 .send(payload);
 
         expect(res.status).toBe(409);
@@ -83,6 +99,7 @@ describe('бизнес-правила: штрафы', () => {
     it('несуществующее ТС — 400', async () => {
         const res = await request(app)
             .post('/v1/fines')
+            .set('Authorization', bearer(token))
             .send(finePayload(NIL_UUID));
 
         expect(res.status).toBe(400);
@@ -90,10 +107,11 @@ describe('бизнес-правила: штрафы', () => {
     });
 
     it('несуществующий водитель — 400', async () => {
-        const { vehicleId } = await createPrereqs();
+        const { vehicleId } = await createPrereqs(token);
 
         const res = await request(app)
             .post('/v1/fines')
+            .set('Authorization', bearer(token))
             .send(finePayload(vehicleId, NIL_UUID));
 
         expect(res.status).toBe(400);
@@ -103,10 +121,11 @@ describe('бизнес-правила: штрафы', () => {
 
 describe('бизнес-правила: бронирования', () => {
     it('окончание раньше начала — 400', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
 
         const res = await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId, {
                 endsAt: '2026-10-25T09:00',
                 startsAt: '2026-10-25T10:00'
@@ -117,10 +136,11 @@ describe('бизнес-правила: бронирования', () => {
     });
 
     it('несуществующий водитель — 400', async () => {
-        const { vehicleId } = await createPrereqs();
+        const { vehicleId } = await createPrereqs(token);
 
         const res = await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, NIL_UUID));
 
         expect(res.status).toBe(400);
@@ -128,14 +148,16 @@ describe('бизнес-правила: бронирования', () => {
     });
 
     it('пересечение периодов одного ТС — 409', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
 
         await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId));
 
         const res = await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId, {
                 endsAt: '2026-10-25T13:00',
                 startsAt: '2026-10-25T11:00'
@@ -146,27 +168,31 @@ describe('бизнес-правила: бронирования', () => {
     });
 
     it('отменённая бронь пересечению не мешает — 201', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
 
         await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId, { status: 'cancelled' }));
 
         const res = await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId));
 
         expect(res.status).toBe(201);
     });
 
     it('изменение брони на её же период проходит (самоисключение)', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
         const created = await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId));
 
         const res = await request(app)
             .put(`/v1/bookings/${created.body.data.id}`)
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId, { purpose: 'Та же бронь, новая цель' }));
 
         expect(res.status).toBe(200);
@@ -178,6 +204,7 @@ describe('ошибки запросов', () => {
     it('неизвестный id — 404', async () => {
         const res = await request(app)
             .put(`/v1/drivers/${NIL_UUID}`)
+            .set('Authorization', bearer(token))
             .send(driverPayload());
 
         expect(res.status).toBe(404);
@@ -187,6 +214,7 @@ describe('ошибки запросов', () => {
     it('некорректное тело — 400 VALIDATION_ERROR', async () => {
         const res = await request(app)
             .post('/v1/vehicles')
+            .set('Authorization', bearer(token))
             .send(vehiclePayload({ year: 1800 }));
 
         expect(res.status).toBe(400);
@@ -196,6 +224,7 @@ describe('ошибки запросов', () => {
     it('некорректный формат даты брони — 400', async () => {
         const res = await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(NIL_UUID, NIL_UUID, { startsAt: '25.10.2026 10:00' }));
 
         expect(res.status).toBe(400);

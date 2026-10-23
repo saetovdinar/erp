@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import request from 'supertest';
 
 import { createApp } from '../src/app';
@@ -13,7 +14,35 @@ export const app = createApp();
 /** Схема (идемпотентно) + чистые таблицы между тестами (CASCADE разрулит зависимости). */
 export async function resetDb(): Promise<void> {
     await ensureSchema();
-    await getPool().query('TRUNCATE bookings, fines, vehicles, drivers CASCADE');
+    await getPool().query('TRUNCATE bookings, fines, vehicles, drivers, users CASCADE');
+}
+
+// тестовый админ: логин/пароль фиксированные, хэш считается на месте
+export const ADMIN_LOGIN = 'admin';
+export const ADMIN_PASSWORD = 'admin-test-123';
+
+export async function createAdmin(): Promise<void> {
+    await getPool().query(
+        'INSERT INTO users (login, password_hash, role) VALUES ($1, $2, $3)',
+        [ ADMIN_LOGIN, bcrypt.hashSync(ADMIN_PASSWORD, 10), 'admin' ]
+    );
+}
+
+export function bearer(token: string): string {
+    return `Bearer ${token}`;
+}
+
+/** Вход тестовым админом → JWT для авторизованных запросов. */
+export async function adminToken(): Promise<string> {
+    const res = await request(app).post('/v1/auth/login')
+.send({ login: ADMIN_LOGIN,
+    password: ADMIN_PASSWORD });
+
+    if (!res.body?.data?.token) {
+        throw new Error(`тестовый админ не смог войти: HTTP ${res.status}`);
+    }
+
+    return res.body.data.token as string;
 }
 
 // детерминированные «уникальные» значения: счётчик вместо random
@@ -78,11 +107,13 @@ export function bookingPayload(
 }
 
 /** Создать водителя и ТС и вернуть их id (зависимости для штрафов/броней). */
-export async function createPrereqs(): Promise<{ driverId: string;
+export async function createPrereqs(token: string): Promise<{ driverId: string;
     vehicleId: string; }> {
     const driver = await request(app).post('/v1/drivers')
+.set('Authorization', bearer(token))
 .send(driverPayload());
     const vehicle = await request(app).post('/v1/vehicles')
+.set('Authorization', bearer(token))
 .send(vehiclePayload());
 
     return { driverId: driver.body.data.id,

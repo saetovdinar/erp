@@ -2,8 +2,11 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
+    adminToken,
     app,
+    bearer,
     bookingPayload,
+    createAdmin,
     createPrereqs,
     driverPayload,
     finePayload,
@@ -11,13 +14,18 @@ import {
     vehiclePayload
 } from './helpers';
 
+let token = '';
+
 beforeEach(async () => {
     await resetDb();
+    await createAdmin();
+    token = await adminToken();
 });
 
 describe('CRUD /v1/drivers', () => {
     it('создаёт, изменяет, читает и удаляет водителя', async () => {
         const created = await request(app).post('/v1/drivers')
+.set('Authorization', bearer(token))
 .send(driverPayload());
 
         expect(created.status).toBe(201);
@@ -28,22 +36,26 @@ describe('CRUD /v1/drivers', () => {
         const id = created.body.data.id;
         const updated = await request(app)
             .put(`/v1/drivers/${id}`)
+            .set('Authorization', bearer(token))
             .send(driverPayload({ fullName: 'Обновлённый Водитель' }));
 
         expect(updated.status).toBe(200);
         expect(updated.body.data.fullName).toBe('Обновлённый Водитель');
 
-        const listed = await request(app).get('/v1/drivers');
+        const listed = await request(app).get('/v1/drivers')
+.set('Authorization', bearer(token));
 
         expect(listed.status).toBe(200);
         expect(listed.body.data).toHaveLength(1);
 
-        const removed = await request(app).delete(`/v1/drivers/${id}`);
+        const removed = await request(app).delete(`/v1/drivers/${id}`)
+.set('Authorization', bearer(token));
 
         expect(removed.status).toBe(200);
         expect(removed.body.data).toBeNull();
 
-        const after = await request(app).get('/v1/drivers');
+        const after = await request(app).get('/v1/drivers')
+.set('Authorization', bearer(token));
 
         expect(after.body.data).toHaveLength(0);
     });
@@ -52,6 +64,7 @@ describe('CRUD /v1/drivers', () => {
 describe('CRUD /v1/vehicles', () => {
     it('создаёт, изменяет, читает и удаляет ТС', async () => {
         const created = await request(app).post('/v1/vehicles')
+.set('Authorization', bearer(token))
 .send(vehiclePayload());
 
         expect(created.status).toBe(201);
@@ -60,12 +73,14 @@ describe('CRUD /v1/vehicles', () => {
         const id = created.body.data.id;
         const updated = await request(app)
             .put(`/v1/vehicles/${id}`)
+            .set('Authorization', bearer(token))
             .send(vehiclePayload({ mileage: 20_000 }));
 
         expect(updated.status).toBe(200);
         expect(updated.body.data.mileage).toBe(20_000);
 
-        const removed = await request(app).delete(`/v1/vehicles/${id}`);
+        const removed = await request(app).delete(`/v1/vehicles/${id}`)
+.set('Authorization', bearer(token));
 
         expect(removed.status).toBe(200);
     });
@@ -73,9 +88,10 @@ describe('CRUD /v1/vehicles', () => {
 
 describe('CRUD /v1/fines', () => {
     it('создаёт, изменяет, читает и удаляет штраф', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
         const created = await request(app)
             .post('/v1/fines')
+            .set('Authorization', bearer(token))
             .send(finePayload(vehicleId, driverId));
 
         expect(created.status).toBe(201);
@@ -85,16 +101,19 @@ describe('CRUD /v1/fines', () => {
         const id = created.body.data.id;
         const updated = await request(app)
             .put(`/v1/fines/${id}`)
+            .set('Authorization', bearer(token))
             .send(finePayload(vehicleId, null));
 
         expect(updated.status).toBe(200);
         expect(updated.body.data.driverId).toBeNull();
 
-        const listed = await request(app).get('/v1/fines');
+        const listed = await request(app).get('/v1/fines')
+.set('Authorization', bearer(token));
 
         expect(listed.body.data).toHaveLength(1);
 
-        const removed = await request(app).delete(`/v1/fines/${id}`);
+        const removed = await request(app).delete(`/v1/fines/${id}`)
+.set('Authorization', bearer(token));
 
         expect(removed.status).toBe(200);
     });
@@ -102,9 +121,10 @@ describe('CRUD /v1/fines', () => {
 
 describe('CRUD /v1/bookings', () => {
     it('создаёт, изменяет, читает и удаляет бронь', async () => {
-        const { driverId, vehicleId } = await createPrereqs();
+        const { driverId, vehicleId } = await createPrereqs(token);
         const created = await request(app)
             .post('/v1/bookings')
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId));
 
         expect(created.status).toBe(201);
@@ -114,12 +134,14 @@ describe('CRUD /v1/bookings', () => {
         const id = created.body.data.id;
         const updated = await request(app)
             .put(`/v1/bookings/${id}`)
+            .set('Authorization', bearer(token))
             .send(bookingPayload(vehicleId, driverId, { purpose: 'Обновлённая цель' }));
 
         expect(updated.status).toBe(200);
         expect(updated.body.data.purpose).toBe('Обновлённая цель');
 
-        const removed = await request(app).delete(`/v1/bookings/${id}`);
+        const removed = await request(app).delete(`/v1/bookings/${id}`)
+.set('Authorization', bearer(token));
 
         expect(removed.status).toBe(200);
     });

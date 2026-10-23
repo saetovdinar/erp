@@ -12,7 +12,8 @@ export default defineConfig({
         testTimeout: 20000,
         env: {
             NODE_ENV: 'test',
-            DATABASE_URL: 'postgres://erp:erp@localhost:5434/erp_test'
+            DATABASE_URL: 'postgres://erp:erp@localhost:5434/erp_test',
+            JWT_SECRET: 'test-secret-erp'
         }
     }
 });

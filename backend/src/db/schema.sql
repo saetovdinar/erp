@@ -40,6 +40,15 @@ CREATE TABLE IF NOT EXISTS fines (
     is_paid boolean NOT NULL DEFAULT false
 );
 
+-- Учётки панели (пока одна роль; расширение ролями — отдельным этапом).
+CREATE TABLE IF NOT EXISTS users (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    login text NOT NULL UNIQUE,
+    password_hash text NOT NULL,
+    role text NOT NULL DEFAULT 'admin' CHECK (role IN ('admin')),
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS bookings (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     vehicle_id uuid NOT NULL REFERENCES vehicles(id) ON DELETE RESTRICT,
