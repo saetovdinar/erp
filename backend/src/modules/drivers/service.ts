@@ -5,13 +5,13 @@ import { isUniqueViolation } from '../../utils/pgErrors';
 import * as repository from './repository';
 import type { IDriver, IDriverInput } from './types';
 
-export async function listDrivers(): Promise<IDriver[]> {
-    return await repository.listDrivers();
+export async function listDrivers(userId: string): Promise<IDriver[]> {
+    return await repository.listDrivers(userId);
 }
 
-export async function createDriver(input: IDriverInput): Promise<IDriver> {
+export async function createDriver(userId: string, input: IDriverInput): Promise<IDriver> {
     try {
-        return await repository.createDriver(input);
+        return await repository.createDriver(userId, input);
     } catch (err: unknown) {
         if (isUniqueViolation(err)) {
             throw new ApiError(409, ErrorCode.Conflict, 'Водитель с таким номером прав уже существует');
@@ -21,9 +21,13 @@ export async function createDriver(input: IDriverInput): Promise<IDriver> {
     }
 }
 
-export async function updateDriver(id: string, input: IDriverInput): Promise<IDriver> {
+export async function updateDriver(
+        userId: string,
+        id: string,
+        input: IDriverInput
+): Promise<IDriver> {
     try {
-        const driver = await repository.updateDriver(id, input);
+        const driver = await repository.updateDriver(userId, id, input);
 
         if (!driver) {
             throw new ApiError(404, ErrorCode.NotFound, 'Запись не найдена');
@@ -39,12 +43,12 @@ export async function updateDriver(id: string, input: IDriverInput): Promise<IDr
     }
 }
 
-export async function removeDriver(id: string): Promise<void> {
+export async function removeDriver(userId: string, id: string): Promise<void> {
     if (await repository.driverHasDependencies(id)) {
         throw new ApiError(409, ErrorCode.Conflict,
             'Нельзя удалить водителя: есть связанные штрафы или бронирования');
     }
-    if (!await repository.removeDriver(id)) {
+    if (!await repository.removeDriver(userId, id)) {
         throw new ApiError(404, ErrorCode.NotFound, 'Запись не найдена');
     }
 }

@@ -1,4 +1,4 @@
-export type UserRole = 'admin';
+export type UserRole = 'admin' | 'user';
 
 /** Строка таблицы users (snake_case из SQL). */
 export interface IUserRow {

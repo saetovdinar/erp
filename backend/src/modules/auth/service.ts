@@ -5,7 +5,7 @@ import { ApiError } from '../../errors/ApiError';
 import { ErrorCode } from '../../errors/ErrorCode';
 import { signToken } from '../../services/jwt';
 
-import { findUserById, findUserByLogin } from './repository';
+import { findUserById, findUserByLogin, updateUserPassword } from './repository';
 import type { ILoginResult, IUser, IUserRow } from './types';
 
 // bcrypt.compare при любом исходе занимает одно время: хэш-заглушка прячет
@@ -44,4 +44,20 @@ export async function me(userId: string): Promise<IUser> {
     }
 
     return toUser(user);
+}
+
+/** Смена собственного пароля: текущий подтверждается, новый — от 8 символов. */
+export async function changePassword(
+        userId: string,
+        currentPassword: string,
+        newPassword: string
+): Promise<void> {
+    const user = await findUserById(userId);
+    const ok = await bcrypt.compare(currentPassword, user?.password_hash ?? DUMMY_HASH);
+
+    if (!user || !ok) {
+        throw new ApiError(401, ErrorCode.Unauthorized, 'Неверный пароль');
+    }
+
+    await updateUserPassword(userId, await bcrypt.hash(newPassword, 10));
 }

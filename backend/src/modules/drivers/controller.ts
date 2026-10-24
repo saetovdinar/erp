@@ -5,19 +5,19 @@ import { sendSuccess } from '../../shared/api/sendSuccess';
 import * as service from './service';
 import type { IDriverInput } from './types';
 
-export async function list(_req: Request, res: Response): Promise<void> {
-    sendSuccess(res, 200, await service.listDrivers());
+export async function list(req: Request, res: Response): Promise<void> {
+    sendSuccess(res, 200, await service.listDrivers(req.userId!));
 }
 
 export async function create(req: Request, res: Response): Promise<void> {
-    const driver = await service.createDriver(req.body as IDriverInput);
+    const driver = await service.createDriver(req.userId!, req.body as IDriverInput);
 
     sendSuccess(res, 201, driver);
 }
 
 export async function update(req: Request, res: Response): Promise<void> {
     const { id } = req.params as unknown as { id: string; };
-    const driver = await service.updateDriver(id, req.body as IDriverInput);
+    const driver = await service.updateDriver(req.userId!, id, req.body as IDriverInput);
 
     sendSuccess(res, 200, driver);
 }
@@ -25,6 +25,6 @@ export async function update(req: Request, res: Response): Promise<void> {
 export async function remove(req: Request, res: Response): Promise<void> {
     const { id } = req.params as unknown as { id: string; };
 
-    await service.removeDriver(id);
+    await service.removeDriver(req.userId!, id);
     sendSuccess(res, 200, null);
 }

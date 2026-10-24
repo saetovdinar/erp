@@ -36,7 +36,8 @@ const RETURNING_SQL = `RETURNING id,
        purpose,
        status`;
 
-export async function listBookings(): Promise<IBooking[]> {
+// все запросы — в рамках учётки-владельца (изоляция данных)
+export async function listBookings(userId: string): Promise<IBooking[]> {
     const { rows } = await conn().query<IBookingRow>(`
 SELECT id,
        vehicle_id,
@@ -46,63 +47,69 @@ SELECT id,
        purpose,
        status
   FROM bookings
- ORDER BY id`);
+ WHERE user_id = $1
+ ORDER BY id`,
+        [ userId ]);
 
     return rows.map(toBooking);
 }
 
-export async function createBooking(input: IBookingInput): Promise<IBooking> {
+export async function createBooking(userId: string, input: IBookingInput): Promise<IBooking> {
     const { rows } = await conn().query<IBookingRow>(
-`INSERT INTO bookings (vehicle_id, driver_id, starts_at, ends_at, purpose, status)
-VALUES ($1, $2, $3, $4, $5, $6)
+`INSERT INTO bookings (user_id, vehicle_id, driver_id, starts_at, ends_at, purpose, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ${RETURNING_SQL}`,
-        [ input.vehicleId, input.driverId, input.startsAt, input.endsAt, input.purpose, input.status ]
+        [ userId, input.vehicleId, input.driverId, input.startsAt, input.endsAt, input.purpose, input.status ]
     );
 
     return toBooking(rows[0]);
 }
 
-export async function updateBooking(id: string, input: IBookingInput): Promise<IBooking | null> {
+export async function updateBooking(
+        userId: string,
+        id: string,
+        input: IBookingInput
+): Promise<IBooking | null> {
     const { rows } = await conn().query<IBookingRow>(
 `UPDATE bookings
-   SET vehicle_id = $2,
-       driver_id = $3,
-       starts_at = $4,
-       ends_at = $5,
-       purpose = $6,
-       status = $7
- WHERE id = $1
+   SET vehicle_id = $3,
+       driver_id = $4,
+       starts_at = $5,
+       ends_at = $6,
+       purpose = $7,
+       status = $8
+ WHERE id = $2 AND user_id = $1
 ${RETURNING_SQL}`,
-        [ id, input.vehicleId, input.driverId, input.startsAt, input.endsAt, input.purpose, input.status ]
+        [ userId, id, input.vehicleId, input.driverId, input.startsAt, input.endsAt, input.purpose, input.status ]
     );
 
     return rows[0] ? toBooking(rows[0]) : null;
 }
 
-export async function removeBooking(id: string): Promise<boolean> {
+export async function removeBooking(userId: string, id: string): Promise<boolean> {
     const { rowCount } = await conn().query(
-        'DELETE FROM bookings WHERE id = $1',
-        [ id ]
+        'DELETE FROM bookings WHERE id = $2 AND user_id = $1',
+        [ userId, id ]
     );
 
     return (rowCount ?? 0) > 0;
 }
 
-/** Существует ли ТС (проверка ссылки при создании/изменении брони). */
-export async function vehicleExists(id: string): Promise<boolean> {
+/** Существует ли ТС у данной учётки (ссылки брони не выходят за владельца). */
+export async function vehicleExists(id: string, userId: string): Promise<boolean> {
     const { rows } = await conn().query<{ exists: boolean; }>(
-        'SELECT EXISTS (SELECT 1 FROM vehicles WHERE id = $1) AS exists',
-        [ id ]
+        'SELECT EXISTS (SELECT 1 FROM vehicles WHERE id = $1 AND user_id = $2) AS exists',
+        [ id, userId ]
     );
 
     return rows[0].exists;
 }
 
-/** Существует ли водитель. */
-export async function driverExists(id: string): Promise<boolean> {
+/** Существует ли водитель у данной учётки. */
+export async function driverExists(id: string, userId: string): Promise<boolean> {
     const { rows } = await conn().query<{ exists: boolean; }>(
-        'SELECT EXISTS (SELECT 1 FROM drivers WHERE id = $1) AS exists',
-        [ id ]
+        'SELECT EXISTS (SELECT 1 FROM drivers WHERE id = $1 AND user_id = $2) AS exists',
+        [ id, userId ]
     );
 
     return rows[0].exists;
@@ -111,6 +118,7 @@ export async function driverExists(id: string): Promise<boolean> {
 /**
  * Пересекается ли период с чужой бронью того же ТС (не считая отменённых).
  * selfId исключается при изменении; для создания передаётся nil-uuid.
+ * Фильтра по учётке нет: ТС уже принадлежит только этой учётке.
  */
 export async function bookingOverlaps(
         input: IBookingInput,

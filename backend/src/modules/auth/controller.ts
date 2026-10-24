@@ -13,3 +13,8 @@ export async function login(req: Request, res: Response): Promise<void> {
 export async function me(req: Request, res: Response): Promise<void> {
     sendSuccess(res, 200, await service.me(req.userId!));
 }
+
+export async function changePassword(req: Request, res: Response): Promise<void> {
+    await service.changePassword(req.userId!, req.body.currentPassword, req.body.newPassword);
+    sendSuccess(res, 200, null);
+}

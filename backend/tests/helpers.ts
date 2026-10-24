@@ -45,6 +45,38 @@ export async function adminToken(): Promise<string> {
     return res.body.data.token as string;
 }
 
+// тестовая обычная учётка (создаётся через API от админа)
+export const USER_LOGIN = 'ivanov';
+export const USER_PASSWORD = 'user-test-123';
+
+/** Создать учётку с ролью user от админа и сразу войти ею → id + токен. */
+export async function createUserAccount(
+        adminTok: string,
+        login = USER_LOGIN,
+        password = USER_PASSWORD
+): Promise<{ id: string;
+            token: string; }> {
+    const created = await request(app).post('/v1/users')
+.set('Authorization', bearer(adminTok))
+.send({ login,
+    password });
+
+    if (created.status !== 201) {
+        throw new Error(`тестовая учётка не создалась: HTTP ${created.status}`);
+    }
+
+    const res = await request(app).post('/v1/auth/login')
+.send({ login,
+    password });
+
+    if (!res.body?.data?.token) {
+        throw new Error(`тестовая учётка не смогла войти: HTTP ${res.status}`);
+    }
+
+    return { id: created.body.data.id,
+        token: res.body.data.token as string };
+}
+
 // детерминированные «уникальные» значения: счётчик вместо random
 let seq = 0;
 

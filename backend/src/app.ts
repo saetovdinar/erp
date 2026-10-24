@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 
-import { authMiddleware } from './middleware/auth';
+import { authMiddleware, requireAdmin } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errors';
 import { rateLimitMiddleware } from './middleware/rateLimit';
 import { initAuthRepository } from './modules/auth/repository';
@@ -14,6 +14,8 @@ import { initFinesRepository } from './modules/fines/repository';
 import { finesRouter } from './modules/fines/routes';
 import { initHealthRepository } from './modules/health/repository';
 import { healthRouter } from './modules/health/routes';
+import { initUsersRepository } from './modules/users/repository';
+import { usersRouter } from './modules/users/routes';
 import { initVehiclesRepository } from './modules/vehicles/repository';
 import { vehiclesRouter } from './modules/vehicles/routes';
 import { getPool } from './utils/db';
@@ -26,6 +28,7 @@ initBookingsRepository(pool);
 initDriversRepository(pool);
 initFinesRepository(pool);
 initHealthRepository(pool);
+initUsersRepository(pool);
 initVehiclesRepository(pool);
 
 export function createApp() {
@@ -43,6 +46,9 @@ export function createApp() {
     app.use('/v1/vehicles', authMiddleware, vehiclesRouter);
     app.use('/v1/fines', authMiddleware, finesRouter);
     app.use('/v1/bookings', authMiddleware, bookingsRouter);
+
+    // учётки — только админу (изоляция: данные каждого — только его собственные)
+    app.use('/v1/users', authMiddleware, requireAdmin, usersRouter);
 
     app.use(notFoundHandler);
     app.use(errorHandler);

@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ApiError } from '../errors/ApiError';
 import { ErrorCode } from '../errors/ErrorCode';
 import { findUserById } from '../modules/auth/repository';
+import type { UserRole } from '../modules/auth/types';
 import { type IJwtPayload, TokenExpiredError, verifyToken } from '../services/jwt';
 
 declare global {
@@ -13,11 +14,12 @@ declare global {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         interface Request {
             userId?: string;
+            userRole?: UserRole;
         }
     }
 }
 
-/** Bearer JWT → req.userId (+ проверка, что пользователь жив). */
+/** Bearer JWT → req.userId + req.userRole (роль — из БД, не из токена). */
 export async function authMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
     try {
         const header = req.headers.authorization ?? '';
@@ -38,10 +40,6 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
             throw new ApiError(401, ErrorCode.InvalidToken, 'Невалидный токен');
         }
 
-        if (payload.role !== 'admin') {
-            throw new ApiError(401, ErrorCode.InvalidToken, 'Некорректная роль в токене');
-        }
-
         const user = await findUserById(payload.sub);
 
         if (!user) {
@@ -49,8 +47,19 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
         }
 
         req.userId = user.id;
+        req.userRole = user.role;
         next();
     } catch (err) {
         next(err);
     }
+}
+
+/** Только админу; ставится после authMiddleware. */
+export function requireAdmin(req: Request, _res: Response, next: NextFunction): void {
+    if (req.userRole !== 'admin') {
+        next(new ApiError(403, ErrorCode.Forbidden, 'Доступ только для администратора'));
+
+        return;
+    }
+    next();
 }

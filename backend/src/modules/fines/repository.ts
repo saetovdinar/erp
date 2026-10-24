@@ -36,7 +36,8 @@ const RETURNING_SQL = `RETURNING id,
        amount,
        is_paid`;
 
-export async function listFines(): Promise<IFine[]> {
+// все запросы — в рамках учётки-владельца (изоляция данных)
+export async function listFines(userId: string): Promise<IFine[]> {
     const { rows } = await conn().query<IFineRow>(`
 SELECT id,
        vehicle_id,
@@ -46,63 +47,69 @@ SELECT id,
        amount,
        is_paid
   FROM fines
- ORDER BY id`);
+ WHERE user_id = $1
+ ORDER BY id`,
+        [ userId ]);
 
     return rows.map(toFine);
 }
 
-export async function createFine(input: IFineInput): Promise<IFine> {
+export async function createFine(userId: string, input: IFineInput): Promise<IFine> {
     const { rows } = await conn().query<IFineRow>(
-`INSERT INTO fines (vehicle_id, driver_id, date, article, amount, is_paid)
-VALUES ($1, $2, $3, $4, $5, $6)
+`INSERT INTO fines (user_id, vehicle_id, driver_id, date, article, amount, is_paid)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ${RETURNING_SQL}`,
-        [ input.vehicleId, input.driverId, input.date, input.article, input.amount, input.isPaid ]
+        [ userId, input.vehicleId, input.driverId, input.date, input.article, input.amount, input.isPaid ]
     );
 
     return toFine(rows[0]);
 }
 
-export async function updateFine(id: string, input: IFineInput): Promise<IFine | null> {
+export async function updateFine(
+        userId: string,
+        id: string,
+        input: IFineInput
+): Promise<IFine | null> {
     const { rows } = await conn().query<IFineRow>(
 `UPDATE fines
-   SET vehicle_id = $2,
-       driver_id = $3,
-       date = $4,
-       article = $5,
-       amount = $6,
-       is_paid = $7
- WHERE id = $1
+   SET vehicle_id = $3,
+       driver_id = $4,
+       date = $5,
+       article = $6,
+       amount = $7,
+       is_paid = $8
+ WHERE id = $2 AND user_id = $1
 ${RETURNING_SQL}`,
-        [ id, input.vehicleId, input.driverId, input.date, input.article, input.amount, input.isPaid ]
+        [ userId, id, input.vehicleId, input.driverId, input.date, input.article, input.amount, input.isPaid ]
     );
 
     return rows[0] ? toFine(rows[0]) : null;
 }
 
-export async function removeFine(id: string): Promise<boolean> {
+export async function removeFine(userId: string, id: string): Promise<boolean> {
     const { rowCount } = await conn().query(
-        'DELETE FROM fines WHERE id = $1',
-        [ id ]
+        'DELETE FROM fines WHERE id = $2 AND user_id = $1',
+        [ userId, id ]
     );
 
     return (rowCount ?? 0) > 0;
 }
 
-/** Существует ли ТС (проверка ссылки при создании/изменении штрафа). */
-export async function vehicleExists(id: string): Promise<boolean> {
+/** Существует ли ТС у данной учётки (ссылки штрафа не выходят за владельца). */
+export async function vehicleExists(id: string, userId: string): Promise<boolean> {
     const { rows } = await conn().query<{ exists: boolean; }>(
-        'SELECT EXISTS (SELECT 1 FROM vehicles WHERE id = $1) AS exists',
-        [ id ]
+        'SELECT EXISTS (SELECT 1 FROM vehicles WHERE id = $1 AND user_id = $2) AS exists',
+        [ id, userId ]
     );
 
     return rows[0].exists;
 }
 
-/** Существует ли водитель. */
-export async function driverExists(id: string): Promise<boolean> {
+/** Существует ли водитель у данной учётки. */
+export async function driverExists(id: string, userId: string): Promise<boolean> {
     const { rows } = await conn().query<{ exists: boolean; }>(
-        'SELECT EXISTS (SELECT 1 FROM drivers WHERE id = $1) AS exists',
-        [ id ]
+        'SELECT EXISTS (SELECT 1 FROM drivers WHERE id = $1 AND user_id = $2) AS exists',
+        [ id, userId ]
     );
 
     return rows[0].exists;

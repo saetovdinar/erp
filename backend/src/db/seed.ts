@@ -258,44 +258,9 @@ const bookingsSeed: IBookingSeed[] = [
 export async function seed(): Promise<void> {
     const pool = getPool();
 
-    for (const d of driversSeed) {
-        await pool.query(
-`INSERT INTO drivers (id, full_name, license_number, phone, experience_years, hired_at, status)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (id) DO NOTHING`,
-            [ d.id, d.fullName, d.licenseNumber, d.phone, d.experienceYears, d.hiredAt, d.status ]
-        );
-    }
-
-    for (const v of vehiclesSeed) {
-        await pool.query(
-`INSERT INTO vehicles (id, plate, make, model, vehicle_type, year, mileage, status)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-ON CONFLICT (id) DO NOTHING`,
-            [ v.id, v.plate, v.make, v.model, v.vehicleType, v.year, v.mileage, v.status ]
-        );
-    }
-
-    for (const f of finesSeed) {
-        await pool.query(
-`INSERT INTO fines (id, vehicle_id, driver_id, date, article, amount, is_paid)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (id) DO NOTHING`,
-            [ f.id, f.vehicleId, f.driverId, f.date, f.article, f.amount, f.isPaid ]
-        );
-    }
-
-    for (const b of bookingsSeed) {
-        await pool.query(
-`INSERT INTO bookings (id, vehicle_id, driver_id, starts_at, ends_at, purpose, status)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (id) DO NOTHING`,
-            [ b.id, b.vehicleId, b.driverId, b.startsAt, b.endsAt, b.purpose, b.status ]
-        );
-    }
-
-    // админ панели: логин admin, пароль из ADMIN_PASSWORD (по умолчанию — для
-    // разработки); при повторном сиде хэш обновляется под текущий env
+    // админ — первым: все демо-данные ниже принадлежат ему (user_id).
+    // Логин admin, пароль из ADMIN_PASSWORD; при повторном сиде хэш
+    // обновляется под текущий env
     const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin123';
 
     await pool.query(
@@ -304,6 +269,42 @@ VALUES ($1, 'admin', $2, 'admin')
 ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
         [ ADMIN_ID, await bcrypt.hash(adminPassword, 10) ]
     );
+
+    for (const d of driversSeed) {
+        await pool.query(
+`INSERT INTO drivers (id, user_id, full_name, license_number, phone, experience_years, hired_at, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (id) DO NOTHING`,
+            [ d.id, ADMIN_ID, d.fullName, d.licenseNumber, d.phone, d.experienceYears, d.hiredAt, d.status ]
+        );
+    }
+
+    for (const v of vehiclesSeed) {
+        await pool.query(
+`INSERT INTO vehicles (id, user_id, plate, make, model, vehicle_type, year, mileage, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+ON CONFLICT (id) DO NOTHING`,
+            [ v.id, ADMIN_ID, v.plate, v.make, v.model, v.vehicleType, v.year, v.mileage, v.status ]
+        );
+    }
+
+    for (const f of finesSeed) {
+        await pool.query(
+`INSERT INTO fines (id, user_id, vehicle_id, driver_id, date, article, amount, is_paid)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (id) DO NOTHING`,
+            [ f.id, ADMIN_ID, f.vehicleId, f.driverId, f.date, f.article, f.amount, f.isPaid ]
+        );
+    }
+
+    for (const b of bookingsSeed) {
+        await pool.query(
+`INSERT INTO bookings (id, user_id, vehicle_id, driver_id, starts_at, ends_at, purpose, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (id) DO NOTHING`,
+            [ b.id, ADMIN_ID, b.vehicleId, b.driverId, b.startsAt, b.endsAt, b.purpose, b.status ]
+        );
+    }
 }
 
 

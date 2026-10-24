@@ -5,9 +5,23 @@
 -- timestamp 'YYYY-MM-DDTHH:mm' (без таймзоны, как в формах фронта).
 -- Ссылки с ON DELETE RESTRICT — страховка правила «нельзя удалить запись
 -- с зависимостями» (основная проверка — в сервисах модулей).
+--
+-- Данные изолированы по учёткам: user_id → users. Удаление учётки удаляет
+-- все её данные; порядок (штрафы/брони раньше ТС и водителей) — в сервисе
+-- users, иначе сработал бы RESTRICT по ссылкам vehicle_id/driver_id.
+
+-- Учётки панели: админ один (сидируется), остальные создаёт админ (role user)
+CREATE TABLE IF NOT EXISTS users (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    login text NOT NULL UNIQUE,
+    password_hash text NOT NULL,
+    role text NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+    created_at timestamptz NOT NULL DEFAULT now()
+);
 
 CREATE TABLE IF NOT EXISTS drivers (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     full_name text NOT NULL,
     license_number text NOT NULL UNIQUE,
     phone text NOT NULL,
@@ -19,6 +33,7 @@ CREATE TABLE IF NOT EXISTS drivers (
 
 CREATE TABLE IF NOT EXISTS vehicles (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     plate text NOT NULL UNIQUE,
     make text NOT NULL,
     model text NOT NULL,
@@ -32,6 +47,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
 
 CREATE TABLE IF NOT EXISTS fines (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     vehicle_id uuid NOT NULL REFERENCES vehicles(id) ON DELETE RESTRICT,
     driver_id uuid REFERENCES drivers(id) ON DELETE RESTRICT,
     date date NOT NULL,
@@ -40,17 +56,9 @@ CREATE TABLE IF NOT EXISTS fines (
     is_paid boolean NOT NULL DEFAULT false
 );
 
--- Учётки панели (пока одна роль; расширение ролями — отдельным этапом).
-CREATE TABLE IF NOT EXISTS users (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    login text NOT NULL UNIQUE,
-    password_hash text NOT NULL,
-    role text NOT NULL DEFAULT 'admin' CHECK (role IN ('admin')),
-    created_at timestamptz NOT NULL DEFAULT now()
-);
-
 CREATE TABLE IF NOT EXISTS bookings (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     vehicle_id uuid NOT NULL REFERENCES vehicles(id) ON DELETE RESTRICT,
     driver_id uuid NOT NULL REFERENCES drivers(id) ON DELETE RESTRICT,
     starts_at timestamp NOT NULL,
@@ -59,3 +67,35 @@ CREATE TABLE IF NOT EXISTS bookings (
     status text NOT NULL DEFAULT 'planned'
         CHECK (status IN ('planned', 'active', 'completed', 'cancelled'))
 );
+
+-- ===== миграции существующих баз (идемпотентно, при каждом старте) =====
+
+-- раньше в CHECK была только роль admin (имя ограничения — автогенерируемое)
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'user'));
+ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user';
+
+-- изоляция данных: user_id у таблиц данных; существующие строки отходят админу
+ALTER TABLE drivers ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES users(id) ON DELETE CASCADE;
+UPDATE drivers SET user_id = a.id
+  FROM (SELECT id FROM users WHERE login = 'admin' ORDER BY created_at LIMIT 1) a
+ WHERE user_id IS NULL;
+ALTER TABLE drivers ALTER COLUMN user_id SET NOT NULL;
+
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES users(id) ON DELETE CASCADE;
+UPDATE vehicles SET user_id = a.id
+  FROM (SELECT id FROM users WHERE login = 'admin' ORDER BY created_at LIMIT 1) a
+ WHERE user_id IS NULL;
+ALTER TABLE vehicles ALTER COLUMN user_id SET NOT NULL;
+
+ALTER TABLE fines ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES users(id) ON DELETE CASCADE;
+UPDATE fines SET user_id = a.id
+  FROM (SELECT id FROM users WHERE login = 'admin' ORDER BY created_at LIMIT 1) a
+ WHERE user_id IS NULL;
+ALTER TABLE fines ALTER COLUMN user_id SET NOT NULL;
+
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES users(id) ON DELETE CASCADE;
+UPDATE bookings SET user_id = a.id
+  FROM (SELECT id FROM users WHERE login = 'admin' ORDER BY created_at LIMIT 1) a
+ WHERE user_id IS NULL;
+ALTER TABLE bookings ALTER COLUMN user_id SET NOT NULL;

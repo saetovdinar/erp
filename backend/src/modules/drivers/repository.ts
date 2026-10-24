@@ -36,7 +36,8 @@ const RETURNING_SQL = `RETURNING id,
        to_char(hired_at, 'YYYY-MM-DD') AS hired_at,
        status`;
 
-export async function listDrivers(): Promise<IDriver[]> {
+// все запросы — в рамках учётки-владельца (изоляция данных)
+export async function listDrivers(userId: string): Promise<IDriver[]> {
     const { rows } = await conn().query<IDriverRow>(`
 SELECT id,
        full_name,
@@ -46,17 +47,20 @@ SELECT id,
        to_char(hired_at, 'YYYY-MM-DD') AS hired_at,
        status
   FROM drivers
- ORDER BY id`);
+ WHERE user_id = $1
+ ORDER BY id`,
+        [ userId ]);
 
     return rows.map(toDriver);
 }
 
-export async function createDriver(input: IDriverInput): Promise<IDriver> {
+export async function createDriver(userId: string, input: IDriverInput): Promise<IDriver> {
     const { rows } = await conn().query<IDriverRow>(
-`INSERT INTO drivers (full_name, license_number, phone, experience_years, hired_at, status)
-VALUES ($1, $2, $3, $4, $5, $6)
+`INSERT INTO drivers (user_id, full_name, license_number, phone, experience_years, hired_at, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ${RETURNING_SQL}`,
         [
+            userId,
             input.fullName,
             input.licenseNumber,
             input.phone,
@@ -69,18 +73,23 @@ ${RETURNING_SQL}`,
     return toDriver(rows[0]);
 }
 
-export async function updateDriver(id: string, input: IDriverInput): Promise<IDriver | null> {
+export async function updateDriver(
+        userId: string,
+        id: string,
+        input: IDriverInput
+): Promise<IDriver | null> {
     const { rows } = await conn().query<IDriverRow>(
 `UPDATE drivers
-   SET full_name = $2,
-       license_number = $3,
-       phone = $4,
-       experience_years = $5,
-       hired_at = $6,
-       status = $7
- WHERE id = $1
+   SET full_name = $3,
+       license_number = $4,
+       phone = $5,
+       experience_years = $6,
+       hired_at = $7,
+       status = $8
+ WHERE id = $2 AND user_id = $1
 ${RETURNING_SQL}`,
         [
+            userId,
             id,
             input.fullName,
             input.licenseNumber,
@@ -94,10 +103,10 @@ ${RETURNING_SQL}`,
     return rows[0] ? toDriver(rows[0]) : null;
 }
 
-export async function removeDriver(id: string): Promise<boolean> {
+export async function removeDriver(userId: string, id: string): Promise<boolean> {
     const { rowCount } = await conn().query(
-        'DELETE FROM drivers WHERE id = $1',
-        [ id ]
+        'DELETE FROM drivers WHERE id = $2 AND user_id = $1',
+        [ userId, id ]
     );
 
     return (rowCount ?? 0) > 0;
@@ -105,6 +114,7 @@ export async function removeDriver(id: string): Promise<boolean> {
 
 /** Есть ли штрафы или бронирования, ссылающиеся на водителя. */
 export async function driverHasDependencies(id: string): Promise<boolean> {
+    // без фильтра учётки: штрафы/брони ссылаются только на своих водителей
     const { rows } = await conn().query<{ exists: boolean; }>(
 `SELECT EXISTS (
     SELECT 1 FROM fines WHERE driver_id = $1

@@ -33,3 +33,10 @@ export async function findUserByLogin(login: string): Promise<IUserRow | null> {
 
     return rows[0] ?? null;
 }
+
+export async function updateUserPassword(id: string, passwordHash: string): Promise<void> {
+    await conn().query(
+        'UPDATE users SET password_hash = $2 WHERE id = $1',
+        [ id, passwordHash ]
+    );
+}

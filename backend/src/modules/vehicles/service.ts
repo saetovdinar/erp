@@ -5,13 +5,13 @@ import { isUniqueViolation } from '../../utils/pgErrors';
 import * as repository from './repository';
 import type { IVehicle, IVehicleInput } from './types';
 
-export async function listVehicles(): Promise<IVehicle[]> {
-    return await repository.listVehicles();
+export async function listVehicles(userId: string): Promise<IVehicle[]> {
+    return await repository.listVehicles(userId);
 }
 
-export async function createVehicle(input: IVehicleInput): Promise<IVehicle> {
+export async function createVehicle(userId: string, input: IVehicleInput): Promise<IVehicle> {
     try {
-        return await repository.createVehicle(input);
+        return await repository.createVehicle(userId, input);
     } catch (err: unknown) {
         if (isUniqueViolation(err)) {
             throw new ApiError(409, ErrorCode.Conflict, 'ТС с таким госномером уже существует');
@@ -21,9 +21,13 @@ export async function createVehicle(input: IVehicleInput): Promise<IVehicle> {
     }
 }
 
-export async function updateVehicle(id: string, input: IVehicleInput): Promise<IVehicle> {
+export async function updateVehicle(
+        userId: string,
+        id: string,
+        input: IVehicleInput
+): Promise<IVehicle> {
     try {
-        const vehicle = await repository.updateVehicle(id, input);
+        const vehicle = await repository.updateVehicle(userId, id, input);
 
         if (!vehicle) {
             throw new ApiError(404, ErrorCode.NotFound, 'Запись не найдена');
@@ -39,12 +43,12 @@ export async function updateVehicle(id: string, input: IVehicleInput): Promise<I
     }
 }
 
-export async function removeVehicle(id: string): Promise<void> {
+export async function removeVehicle(userId: string, id: string): Promise<void> {
     if (await repository.vehicleHasDependencies(id)) {
         throw new ApiError(409, ErrorCode.Conflict,
             'Нельзя удалить ТС: есть связанные штрафы или бронирования');
     }
-    if (!await repository.removeVehicle(id)) {
+    if (!await repository.removeVehicle(userId, id)) {
         throw new ApiError(404, ErrorCode.NotFound, 'Запись не найдена');
     }
 }
