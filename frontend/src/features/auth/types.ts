@@ -1,4 +1,4 @@
-export type UserRole = 'admin';
+export type UserRole = 'admin' | 'user';
 
 export interface IUser {
     id: string;
@@ -16,6 +16,12 @@ export interface ILoginResult {
     token: string;
     tokenType: 'bearer';
     user: IUser;
+}
+
+/** Тело PUT /v1/auth/password. */
+export interface IChangePasswordInput {
+    currentPassword: string;
+    newPassword: string;
 }
 
 /** 'checking' — токен есть, личность уточняем через /v1/auth/me. */

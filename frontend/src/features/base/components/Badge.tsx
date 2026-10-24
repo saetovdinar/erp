@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import styles from './badge.module.css';
+
 export type BadgeTone = 'danger' | 'info' | 'neutral' | 'success' | 'warn';
 
 interface IProps {
@@ -8,5 +10,5 @@ interface IProps {
 }
 
 export function Badge({ children, tone }: IProps) {
-    return <span className = { `badge badge--${tone}` }>{children}</span>;
+    return <span className = { `${styles.badge} ${styles[tone]}` }>{children}</span>;
 }

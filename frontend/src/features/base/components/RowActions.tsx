@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import styles from './row-actions.module.css';
+
 interface IProps<T> {
     onDelete: (row: T) => void;
     onEdit: (row: T) => void;
@@ -17,7 +19,7 @@ export function RowActions<T>({ onDelete, onEdit, row }: IProps<T>) {
     }, [ onEdit, row ]);
 
     return (
-        <div className = 'row-actions'>
+        <div className = { styles.actions }>
             <button className = 'btn btn--ghost'
                 onClick = { _onEditClick }
                 type = 'button'>Изменить</button>

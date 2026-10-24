@@ -3,7 +3,7 @@ import type { AppThunk } from '../../app/types';
 
 import { AUTH_LOGIN_FAILED, AUTH_LOGIN_SUCCEEDED, AUTH_LOGOUT } from './actionTypes';
 import { authApi } from './api';
-import type { ILoginInput, IUser } from './types';
+import type { IChangePasswordInput, ILoginInput, IUser } from './types';
 
 export interface IAuthLoginFailedAction {
     type: typeof AUTH_LOGIN_FAILED;
@@ -54,5 +54,12 @@ export function restoreSession(): AppThunk<Promise<void>> {
         } catch {
             dispatch(authLoginFailed());
         }
+    };
+}
+
+/** Смена собственного пароля; ошибка летит в форму. */
+export function changePassword(input: IChangePasswordInput): AppThunk<Promise<void>> {
+    return async () => {
+        await authApi.changePassword(input);
     };
 }

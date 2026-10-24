@@ -1,5 +1,7 @@
 import { type MouseEvent, type ReactNode, useCallback } from 'react';
 
+import styles from './modal.module.css';
+
 interface IProps {
     children: ReactNode;
     onClose: () => void;
@@ -20,19 +22,19 @@ export function Modal({ children, onClose, title }: IProps) {
     }, []);
 
     return (
-        <div className = 'modal__backdrop'
+        <div className = { styles.backdrop }
             onClick = { _onBackdropClick }>
-            <div className = 'modal'
+            <div className = { styles.modal }
                 onClick = { _onDialogClick }>
-                <div className = 'modal__head'>
-                    <h2 className = 'modal__title'>{title}</h2>
+                <div className = { styles.head }>
+                    <h2 className = { styles.title }>{title}</h2>
                     <button
                         aria-label = 'Закрыть'
                         className = 'btn btn--ghost'
                         onClick = { _onCloseClick }
                         type = 'button'>✕</button>
                 </div>
-                <div className = 'modal__body'>{children}</div>
+                <div className = { styles.body }>{children}</div>
             </div>
         </div>
     );

@@ -6,6 +6,7 @@ import { bookingsReducer } from '../features/bookings/reducer';
 import { driversReducer } from '../features/drivers/reducer';
 import { finesReducer } from '../features/fines/reducer';
 import { healthReducer } from '../features/health/reducer';
+import { usersReducer } from '../features/users/reducer';
 import { vehiclesReducer } from '../features/vehicles/reducer';
 
 import type { IAppState } from './types';
@@ -16,6 +17,7 @@ export const rootReducer = combineReducers({
     drivers: driversReducer,
     fines: finesReducer,
     health: healthReducer,
+    users: usersReducer,
     vehicles: vehiclesReducer
 });
 

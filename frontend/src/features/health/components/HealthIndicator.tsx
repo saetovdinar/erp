@@ -4,6 +4,8 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { checkHealth } from '../actions';
 import { selectHealthDb, selectHealthStatus } from '../selectors';
 
+import styles from './health-indicator.module.css';
+
 const REFRESH_MS = 5000;
 
 /** Индикатор самочувствия API/БД в подвале меню (пинг /v1/health). */
@@ -20,9 +22,9 @@ export function HealthIndicator() {
     }, [ dispatch ]);
 
     return (
-        <div className = 'health'>
-            <span className = { `health__dot health__dot--${status}` } />
-            <span className = 'health__text'>
+        <div className = { styles.root }>
+            <span className = { `${styles.dot} ${styles[status]}` } />
+            <span className = { styles.text }>
                 {status === 'up' ? `API на связи · БД: ${db}` : null}
                 {status === 'down' ? 'API недоступен' : null}
                 {status === 'checking' ? 'Проверяю API…' : null}

@@ -1,0 +1,35 @@
+/* Индикатор самочувствия API/БД в подвале сайдбара. */
+
+.root {
+    align-items: center;
+    border-top: 1px solid #313c4f;
+    display: flex;
+    font-size: 12px;
+    gap: 8px;
+    margin-top: auto;
+    padding: 12px 8px 4px;
+}
+
+.dot {
+    background: #999;
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 8px;
+    width: 8px;
+}
+
+.checking {
+    background: #e6a817;
+}
+
+.up {
+    background: var(--success);
+}
+
+.down {
+    background: var(--danger);
+}
+
+.text {
+    color: #9aa5b5;
+}

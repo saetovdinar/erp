@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import styles from './data-table.module.css';
+
 export interface IColumn<T> {
     key: string;
     render?: (row: T) => ReactNode;
@@ -15,15 +17,15 @@ interface IProps<T extends { id: string; }> {
 
 export function DataTable<T extends { id: string; }>({ columns, emptyText, loading, rows }: IProps<T>) {
     if (loading) {
-        return <p className = 'table-state'>Загрузка…</p>;
+        return <p className = { styles.state }>Загрузка…</p>;
     }
     if (rows.length === 0) {
-        return <p className = 'table-state'>{emptyText}</p>;
+        return <p className = { styles.state }>{emptyText}</p>;
     }
 
     return (
-        <div className = 'table-wrap'>
-            <table className = 'table'>
+        <div className = { styles.wrap }>
+            <table className = { styles.table }>
                 <thead>
                     <tr>
                         {columns.map(col =>
@@ -35,7 +37,8 @@ export function DataTable<T extends { id: string; }>({ columns, emptyText, loadi
                     {rows.map(row => (
                         <tr key = { row.id }>
                             {columns.map(col =>
-                                <td key = { col.key }>{col.render ? col.render(row) : null}</td>
+                                (<td key = { col.key }>{col.render ? col.render(row)
+                                    : String(row[col.key as keyof T] ?? '')}</td>)
                             )}
                         </tr>
                     ))}

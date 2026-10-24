@@ -9,6 +9,7 @@ import type { IBookingsState } from '../features/bookings/types';
 import type { IDriversState } from '../features/drivers/types';
 import type { IFinesState } from '../features/fines/types';
 import type { IHealthState } from '../features/health/types';
+import type { IUsersState } from '../features/users/types';
 import type { IVehiclesState } from '../features/vehicles/types';
 
 export interface IAppState {
@@ -17,6 +18,7 @@ export interface IAppState {
     drivers: IDriversState;
     fines: IFinesState;
     health: IHealthState;
+    users: IUsersState;
     vehicles: IVehiclesState;
 }
 

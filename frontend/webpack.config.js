@@ -24,7 +24,29 @@ module.exports = {
             },
             {
                 test: /\.css$/,
-                use: [ 'style-loader', 'css-loader' ]
+                oneOf: [
+                    {
+                        // компонентные стили: css-modules, классы скоупятся автоматически
+                        // (esModule: false — иначе дефолтный экспорт без .locals и styles приходит undefined)
+                        test: /\.module\.css$/,
+                        use: [
+                            'style-loader',
+                            {
+                                loader: 'css-loader',
+                                options: {
+                                    esModule: false,
+                                    modules: {
+                                        localIdentName: '[name]__[local]--[hash:base64:5]'
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        // глобальный styles.css — сброс и общие примитивы
+                        use: [ 'style-loader', 'css-loader' ]
+                    }
+                ]
             }
         ]
     },

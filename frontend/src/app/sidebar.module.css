@@ -1,0 +1,98 @@
+/* Сайдбар: на десктопе — липкая колонка 240px, до 900px — выезжающий drawer. */
+
+.root {
+    background: #1c2433;
+    color: #d5dbe6;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 16px 12px;
+    position: sticky;
+    top: 0;
+    width: 240px;
+}
+
+.brand {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 4px 8px 20px;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.navLink {
+    border-radius: 8px;
+    color: #b9c2d0;
+    padding: 9px 12px;
+    text-decoration: none;
+}
+
+.navLink:hover {
+    background: #263143;
+    color: #fff;
+}
+
+.navLinkActive {
+    background: var(--info);
+    color: #fff;
+}
+
+.user {
+    align-items: center;
+    border-top: 1px solid #313c4f;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    padding: 12px 8px 0;
+}
+
+.login {
+    color: #d5dbe6;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* «Выйти» — глобальный примитив .btn, перекрашенный под тёмный сайдбар. */
+.user :global(.btn) {
+    background: transparent;
+    border-color: #3d4b61;
+    color: #b9c2d0;
+    flex-shrink: 0;
+    padding: 4px 10px;
+}
+
+.user :global(.btn):hover {
+    background: #263143;
+    color: #fff;
+}
+
+.userActions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 6px;
+}
+
+@media (max-width: 900px) {
+    .root {
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+        left: 0;
+        position: fixed;
+        top: 0;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 30;
+    }
+
+    .open {
+        transform: translateX(0);
+    }
+}

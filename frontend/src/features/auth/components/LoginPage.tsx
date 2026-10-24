@@ -5,6 +5,8 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { login } from '../actions';
 import { selectAuthStatus } from '../selectors';
 
+import styles from './login-page.module.css';
+
 interface IFormState {
     login: string;
     password: string;
@@ -59,11 +61,11 @@ export function LoginPage() {
     }
 
     return (
-        <div className = 'login'>
-            <form className = 'login__card'
+        <div className = { styles.root }>
+            <form className = { styles.card }
                 onSubmit = { _onSubmit }>
-                <h1 className = 'login__title'>ERP · Такси</h1>
-                <p className = 'login__hint'>Войдите, чтобы продолжить</p>
+                <h1 className = { styles.title }>ERP · Такси</h1>
+                <p className = { styles.hint }>Войдите, чтобы продолжить</p>
                 {error ? <p className = 'banner banner--error'>{error}</p> : null}
                 <label className = 'field'>
                     <span className = 'field__label'>Логин</span>
@@ -84,7 +86,7 @@ export function LoginPage() {
                         type = 'password'
                         value = { form.password } />
                 </label>
-                <button className = 'btn btn--primary login__submit'
+                <button className = { `btn btn--primary ${styles.submit}` }
                     disabled = { pending }
                     type = 'submit'>{pending ? 'Вхожу…' : 'Войти'}</button>
             </form>

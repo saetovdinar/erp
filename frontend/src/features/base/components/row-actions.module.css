@@ -1,0 +1,8 @@
+/* Кнопки действий строки таблицы. */
+
+.actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    white-space: nowrap;
+}

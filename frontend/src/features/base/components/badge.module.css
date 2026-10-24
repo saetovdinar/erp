@@ -1,0 +1,34 @@
+/* Бейдж-статус: тон — модификатор с именем тона (success/warn/danger/info/neutral). */
+
+.badge {
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.success {
+    background: #e3f5ea;
+    color: #1c7a43;
+}
+
+.warn {
+    background: #fdf0dd;
+    color: var(--warn);
+}
+
+.danger {
+    background: #fde3e3;
+    color: #a32020;
+}
+
+.info {
+    background: #e3ecfd;
+    color: #1d4fb8;
+}
+
+.neutral {
+    background: #eceef1;
+    color: #55606e;
+}

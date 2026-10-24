@@ -1,0 +1,53 @@
+/* Таблица данных: на узких экранах листается горизонтально внутри обёртки. */
+
+.wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.table th {
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.table td {
+    border-bottom: 1px solid #eef0f3;
+    padding: 10px 14px;
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: #f8f9fb;
+}
+
+/* Заглушка «Загрузка…» / пустой список. */
+.state {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+    padding: 28px;
+    text-align: center;
+}
+
+@media (max-width: 640px) {
+    .table th,
+    .table td {
+        padding: 8px 10px;
+    }
+}

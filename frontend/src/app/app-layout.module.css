@@ -1,0 +1,80 @@
+/* Каркас панели: сайдбар + контент; до 900px — верхняя полоска с кнопкой меню. */
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.content {
+    flex: 1;
+    padding: 24px 28px 48px;
+}
+
+/* Мобильная верхняя полоска (гамбургер + бренд) — видна только до 900px. */
+.topbar {
+    align-items: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: none;
+    gap: 12px;
+    height: 52px;
+    padding: 0 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.topbarToggle {
+    font-size: 18px;
+    line-height: 1;
+    padding: 8px 12px;
+}
+
+.topbarBrand {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+/* Затемнение под открытым сайдбаром-drawer (тоже только до 900px). */
+.backdrop {
+    background: rgba(15, 20, 30, 0.45);
+    display: none;
+    inset: 0;
+    position: fixed;
+    z-index: 20;
+}
+
+/* Экран «Проверяю сессию…». */
+.session {
+    align-items: center;
+    display: flex;
+    min-height: 100vh;
+}
+
+.sessionHint {
+    color: var(--muted);
+    margin: 0;
+    text-align: center;
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .topbar {
+        display: flex;
+    }
+
+    .backdrop {
+        display: block;
+    }
+
+    .content {
+        padding: 16px 14px 40px;
+    }
+}

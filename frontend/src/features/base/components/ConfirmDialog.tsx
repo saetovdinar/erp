@@ -1,3 +1,4 @@
+import styles from './confirm-dialog.module.css';
 import { Modal } from './Modal';
 
 interface IProps {
@@ -12,7 +13,7 @@ export function ConfirmDialog({ error, message, onCancel, onConfirm, title }: IP
     return (
         <Modal onClose = { onCancel }
             title = { title }>
-            <p className = 'confirm__message'>{message}</p>
+            <p className = { styles.message }>{message}</p>
             {error ? <p className = 'banner banner--error'>{error}</p> : null}
             <div className = 'form__actions'>
                 <button className = 'btn'

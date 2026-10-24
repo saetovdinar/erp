@@ -1,0 +1,35 @@
+/* Экран входа: карточка по центру, на телефоне — во всю доступную ширину. */
+
+.root {
+    align-items: center;
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(15, 20, 30, 0.08);
+    display: grid;
+    gap: 12px;
+    padding: 28px 26px;
+    width: min(340px, 100%);
+}
+
+.title {
+    font-size: 18px;
+    margin: 0;
+}
+
+.hint {
+    color: var(--muted);
+    margin: -6px 0 6px;
+}
+
+.submit {
+    justify-self: stretch;
+}
