@@ -1,5 +1,5 @@
-import styles from './confirm-dialog.module.css';
 import { Modal } from './Modal';
+import styles from './confirm-dialog.module.css';
 
 interface IProps {
     error: string | null;

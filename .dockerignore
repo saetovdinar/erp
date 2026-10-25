@@ -1,0 +1,14 @@
+# В образы не попадают: локальные зависимости, сборки, секреты, служебное
+**/node_modules
+**/dist
+**/coverage
+.git
+.env
+.env.*
+!.env.example
+.zcode
+docs
+*.local.md
+*.log
+*.md
+.DS_Store

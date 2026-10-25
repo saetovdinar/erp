@@ -1,0 +1,53 @@
+# Продакшн-стек: postgres + api + web (nginx со сборкой фронта).
+# Секреты — в .env рядом с этим файлом (пример — .env.example).
+# Запуск: docker compose -f docker-compose.prod.yml up -d --build
+# Наружу опубликован только порт 80 (web); postgres и api — внутри сети стека.
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: erp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env}
+      POSTGRES_DB: erp
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5100
+      DATABASE_URL: postgres://erp:${POSTGRES_PASSWORD}@postgres:5432/erp
+      JWT_TTL_DAYS: 30
+      # боевой сид: только учётка admin, без демо-данных
+      SEED_DEMO: "false"
+    # секреты (JWT_SECRET, ADMIN_PASSWORD) — из .env, не в репозитории
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

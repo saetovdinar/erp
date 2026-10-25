@@ -270,6 +270,11 @@ ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
         [ ADMIN_ID, await bcrypt.hash(adminPassword, 10) ]
     );
 
+    // SEED_DEMO=false — боевой режим: создаём только учётку admin
+    if (process.env.SEED_DEMO === 'false') {
+        return;
+    }
+
     for (const d of driversSeed) {
         await pool.query(
 `INSERT INTO drivers (id, user_id, full_name, license_number, phone, experience_years, hired_at, status)
@@ -311,7 +316,9 @@ ON CONFLICT (id) DO NOTHING`,
 if (require.main === module) {
     seed()
         .then(() => {
-            logger.info('Демо-данные вставлены');
+            logger.info(process.env.SEED_DEMO === 'false'
+                ? 'Создана только учётка admin'
+                : 'Демо-данные вставлены');
 
             return closePool();
         })

@@ -4,8 +4,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { restoreSession } from '../features/auth/actions';
 import { selectAuthStatus } from '../features/auth/selectors';
 
-import styles from './app-layout.module.css';
 import { Sidebar } from './Sidebar';
+import styles from './app-layout.module.css';
 import { useAppDispatch, useAppSelector } from './hooks';
 
 /** Каркас панели (сайдбар + контент) — только для вошедших. */
